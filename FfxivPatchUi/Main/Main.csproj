@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D998D198-98D0-4673-9E36-D4F81418DACE}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>FfxivPatchUi</RootNamespace>
+    <RootNamespace>FFXIVKoreanPatch</RootNamespace>
     <AssemblyName>FFXIVKoreanPatch</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -79,6 +79,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FfxivKoreanPatch.resx">
       <DependentUpon>FfxivKoreanPatch.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

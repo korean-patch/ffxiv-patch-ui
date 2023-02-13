@@ -13,7 +13,7 @@ using System.Net.Http;
 using System.Text;
 using System.Windows.Forms;
 
-namespace FfxivPatchUi
+namespace FFXIVKoreanPatch
 {
     public partial class FfxivKoreanPatch : Form
     {
@@ -495,6 +495,9 @@ namespace FfxivPatchUi
             Invoke(new Action(() =>
             {
                 statusLabel.Text = $"버전 {targetVersion}";
+                fullButton.Enabled = true;
+                fontButton.Enabled = true;
+                removeButton.Enabled = true;
             }));
         }
 
@@ -557,6 +560,66 @@ namespace FfxivPatchUi
             if (!requiredFiles.All(requiredFile => File.Exists(Path.Combine(targetDir, requiredFile)))) return null;
 
             return targetDir;
+        }
+
+        private void fullButton_Click(object sender, EventArgs e)
+        {
+            fullButton.Enabled = false;
+            fontButton.Enabled = false;
+            removeButton.Enabled = false;
+
+            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"0 \"{targetDir}\" \"{distribPath}\"")
+            {
+                UseShellExecute = true,
+                Verb = "runas"
+            });
+
+            if (p != null)
+            {
+                p.WaitForExit();
+            }
+
+            Close();
+        }
+
+        private void fontButton_Click(object sender, EventArgs e)
+        {
+            fullButton.Enabled = false;
+            fontButton.Enabled = false;
+            removeButton.Enabled = false;
+
+            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"1 \"{targetDir}\" \"{distribPath}\"")
+            {
+                UseShellExecute = true,
+                Verb = "runas"
+            });
+
+            if (p != null)
+            {
+                p.WaitForExit();
+            }
+
+            Close();
+        }
+
+        private void removeButton_Click(object sender, EventArgs e)
+        {
+            fullButton.Enabled = false;
+            fontButton.Enabled = false;
+            removeButton.Enabled = false;
+
+            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"2 \"{targetDir}\" \"{distribPath}\"")
+            {
+                UseShellExecute = true,
+                Verb = "runas"
+            });
+
+            if (p != null)
+            {
+                p.WaitForExit();
+            }
+
+            Close();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace FfxivPatchUi
+namespace FFXIVKoreanPatch
 {
     internal class Program
     {
@@ -75,7 +75,7 @@ namespace FfxivPatchUi
 
             foreach (string fullPatchFile in fullPatchFiles)
             {
-                File.Copy(Path.Combine(distribDir, fullPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fullPatchFile));
+                File.Copy(Path.Combine(distribDir, fullPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fullPatchFile), true);
             }
         }
 
@@ -84,7 +84,7 @@ namespace FfxivPatchUi
         {
             foreach (string fontPatchFile in fontPatchFiles)
             {
-                File.Copy(Path.Combine(distribDir, fontPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fontPatchFile));
+                File.Copy(Path.Combine(distribDir, fontPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fontPatchFile), true);
             }
         }
 
@@ -93,7 +93,7 @@ namespace FfxivPatchUi
         {
             foreach (string restoreFile in restoreFiles)
             {
-                File.Copy(Path.Combine(distribDir, "orig", restoreFile), Path.Combine(targetDir, "sqpack/ffxiv", restoreFile));
+                File.Copy(Path.Combine(distribDir, "orig", restoreFile), Path.Combine(targetDir, "sqpack/ffxiv", restoreFile), true);
             }
         }
     }

@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{B59FE0F6-E8AC-46EE-A744-6B003CCE119F}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>FfxivPatchUi</RootNamespace>
+    <RootNamespace>FFXIVKoreanPatch</RootNamespace>
     <AssemblyName>FFXIVRegistryInstaller</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
 
-namespace FfxivPatchUi
+namespace FFXIVKoreanPatch
 {
     internal static class Program
     {

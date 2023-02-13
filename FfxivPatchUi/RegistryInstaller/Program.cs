@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace FfxivPatchUi
+namespace FFXIVKoreanPatch
 {
     internal class Program
     {
