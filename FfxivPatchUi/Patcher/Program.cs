@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Threading;
 
 namespace FFXIVKoreanPatch
 {
@@ -56,6 +58,10 @@ namespace FFXIVKoreanPatch
                     Remove();
                     break;
             }
+
+            Console.WriteLine("작업이 성공적으로 완료되었습니다!");
+            Console.WriteLine("이 창은 5초 후 자동으로 닫힙니다.");
+            Thread.Sleep(5000);
         }
 
         // This cleans up old korean chat patch with dinput hook.
