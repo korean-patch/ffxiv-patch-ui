@@ -142,7 +142,13 @@ namespace FFXIVKoreanPatch
             // Check if the patch program is already running, and terminate if it is.
             if (Process.GetProcessesByName(mainFileName).Length > 1)
             {
-                MessageBox.Show("파이널 판타지 14 한글 패치 프로그램이 이미 실행중이에요.");
+                MessageBox.Show(
+                    "파이널 판타지 14 한글 패치 프로그램이 이미 실행중이에요.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly);
 
                 Invoke(new Action(() =>
                 {
@@ -157,7 +163,12 @@ namespace FFXIVKoreanPatch
             {
                 MessageBox.Show(
                     "파이널 판타지 14가 이미 실행중이에요." + Environment.NewLine + Environment.NewLine +
-                    "파이널 판타지 14를 종료한 후 한글 패치 프로그램을 다시 실행해주세요.");
+                    "파이널 판타지 14를 종료한 후 한글 패치 프로그램을 다시 실행해주세요.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly);
 
                 Invoke(new Action(() =>
                 {
@@ -220,7 +231,12 @@ namespace FFXIVKoreanPatch
             {
                 MessageBox.Show(
                     "필요한 프로그램들을 가져오는데 실패했어요." + Environment.NewLine + Environment.NewLine +
-                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.");
+                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly);
 
                 Invoke(new Action(() =>
                 {
@@ -244,7 +260,12 @@ namespace FFXIVKoreanPatch
                     // Call updater to update main executable.
                     MessageBox.Show(
                         "업데이트가 필요해 프로그램을 종료할 거예요." + Environment.NewLine + Environment.NewLine +
-                        "업데이트가 완료되면 자동으로 재실행할게요.");
+                        "업데이트가 완료되면 자동으로 재실행할게요.",
+                        Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly);
 
                     Process.Start(new ProcessStartInfo(updaterPath,
                         $"\"{mainPath}\" \"{mainVersionPath}\" \"{GetDownloadUrlFromAsset(mainAsset)}\" \"{mainAsset.GetValue("id").ToString()}\""));
@@ -261,7 +282,12 @@ namespace FFXIVKoreanPatch
             {
                 MessageBox.Show(
                     "버전을 확인하는데 실패했어요." + Environment.NewLine + Environment.NewLine +
-                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.");
+                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.",
+                    Text,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly);
 
                 Invoke(new Action(() =>
                 {
@@ -344,8 +370,11 @@ namespace FFXIVKoreanPatch
                     "다음 위치에서 파이널 판타지 14 클라이언트가 발견되었어요." + Environment.NewLine + Environment.NewLine +
                     targetDir + Environment.NewLine + Environment.NewLine +
                     "이 클라이언트에 한글 패치를 설치할까요?",
-                    "FFXIV 한글 패치",
-                    MessageBoxButtons.YesNo) == DialogResult.Yes;
+                    Text,
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information,
+                    MessageBoxDefaultButton.Button1,
+                    MessageBoxOptions.DefaultDesktopOnly) == DialogResult.Yes;
             }
 
             // If the target directory is not verified, let user choose.
@@ -355,7 +384,12 @@ namespace FFXIVKoreanPatch
                 {
                     MessageBox.Show(
                         "파이널 판타지 14 클라이언트가 설치된 장소에서 ffxiv_dx11.exe 파일을 찾아 선택해주세요." + Environment.NewLine + Environment.NewLine +
-                        "(보통 game 폴더 내부에 있어요.)");
+                        "(보통 game 폴더 내부에 있어요.)",
+                        Text,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information,
+                        MessageBoxDefaultButton.Button1,
+                        MessageBoxOptions.DefaultDesktopOnly);
 
                     OpenFileDialog dialog = new OpenFileDialog()
                     {
@@ -373,13 +407,25 @@ namespace FFXIVKoreanPatch
 
                         if (string.IsNullOrEmpty(targetDir))
                         {
-                            MessageBox.Show("선택하신 경로가 올바르지 않아요.");
+                            MessageBox.Show(
+                                "선택하신 경로가 올바르지 않아요.",
+                                Text,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error,
+                                MessageBoxDefaultButton.Button1,
+                                MessageBoxOptions.DefaultDesktopOnly);
                             Close();
                         }
                     }
                     else
                     {
-                        MessageBox.Show("선택하신 경로가 올바르지 않아요.");
+                        MessageBox.Show(
+                            "선택하신 경로가 올바르지 않아요.",
+                            Text,
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error,
+                            MessageBoxDefaultButton.Button1,
+                            MessageBoxOptions.DefaultDesktopOnly);
                         Close();
                     }
                 }));
@@ -418,7 +464,12 @@ namespace FFXIVKoreanPatch
 
                             MessageBox.Show(
                                 "한글 폰트 레지스트리를 설정할게요." + Environment.NewLine + Environment.NewLine +
-                                "설정이 끝난 후 컴퓨터를 재시작하지 않으면 파이널 판타지 14 클라이언트 내부에서 한/영 키 입력이 제대로 동작하지 않을 수 있어요.");
+                                "설정이 끝난 후 컴퓨터를 재시작하지 않으면 파이널 판타지 14 클라이언트 내부에서 한/영 키 입력이 제대로 동작하지 않을 수 있어요.",
+                                Text,
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information,
+                                MessageBoxDefaultButton.Button1,
+                                MessageBoxOptions.DefaultDesktopOnly);
 
                             Process p = Process.Start(new ProcessStartInfo(registryInstallerPath)
                             {
@@ -430,7 +481,12 @@ namespace FFXIVKoreanPatch
                             {
                                 MessageBox.Show(
                                     "한글 폰트 레지스트리 설정 중 문제가 발생했어요." + Environment.NewLine + Environment.NewLine +
-                                    "설치를 다시 시도해보세요.");
+                                    "설치를 다시 시도해보세요.",
+                                    Text,
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error,
+                                    MessageBoxDefaultButton.Button1,
+                                    MessageBoxOptions.DefaultDesktopOnly);
                                 Close();
                             }
                             else
@@ -439,7 +495,12 @@ namespace FFXIVKoreanPatch
 
                                 MessageBox.Show(
                                     "한글 폰트 레지스트리 설정이 완료되었어요." + Environment.NewLine + Environment.NewLine +
-                                    "컴퓨터를 재시작한 후 다시 실행해주세요.");
+                                    "컴퓨터를 재시작한 후 다시 실행해주세요.",
+                                    Text,
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information,
+                                    MessageBoxDefaultButton.Button1,
+                                    MessageBoxOptions.DefaultDesktopOnly);
                                 Close();
                             }
                         }));
@@ -474,7 +535,12 @@ namespace FFXIVKoreanPatch
                     MessageBox.Show(
                         "다음 파일을 다운로드하는데 실패했어요." + Environment.NewLine + Environment.NewLine +
                         url + Environment.NewLine + Environment.NewLine +
-                        "문제가 지속되면 디스코드를 통해 문의해주세요.");
+                        "문제가 지속되면 디스코드를 통해 문의해주세요.",
+                        Text,
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error,
+                        MessageBoxDefaultButton.Button1,
+                        MessageBoxOptions.DefaultDesktopOnly);
 
                     Invoke(new Action(() =>
                     {
