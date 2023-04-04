@@ -1,6 +1,6 @@
-﻿namespace FFXIVKoreanPatch
+﻿namespace FFXIVKoreanPatch.Main
 {
-    partial class FfxivKoreanPatch
+    partial class FFXIVKoreanPatch
     {
         /// <summary>
         /// Required designer variable.
@@ -28,70 +28,66 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FfxivKoreanPatch));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FFXIVKoreanPatch));
             this.initialChecker = new System.ComponentModel.BackgroundWorker();
+            this.installWorker = new System.ComponentModel.BackgroundWorker();
+            this.removeWorker = new System.ComponentModel.BackgroundWorker();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.downloadLabel = new System.Windows.Forms.Label();
             this.statusLabel = new System.Windows.Forms.Label();
-            this.fullButton = new System.Windows.Forms.Button();
-            this.fontButton = new System.Windows.Forms.Button();
             this.removeButton = new System.Windows.Forms.Button();
+            this.chatOnlyInstallWorker = new System.ComponentModel.BackgroundWorker();
+            this.chatOnlyInstallButton = new System.Windows.Forms.Button();
+            this.installButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // initialChecker
             // 
+            this.initialChecker.WorkerReportsProgress = true;
             this.initialChecker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.initialChecker_DoWork);
+            this.initialChecker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
+            // 
+            // installWorker
+            // 
+            this.installWorker.WorkerReportsProgress = true;
+            this.installWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.installWorker_DoWork);
+            this.installWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
+            // 
+            // removeWorker
+            // 
+            this.removeWorker.WorkerReportsProgress = true;
+            this.removeWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.removeWorker_DoWork);
+            this.removeWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
+            // 
+            // progressBar
+            // 
+            this.progressBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.progressBar.Location = new System.Drawing.Point(0, 351);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(384, 10);
+            this.progressBar.TabIndex = 0;
+            // 
+            // downloadLabel
+            // 
+            this.downloadLabel.AutoSize = true;
+            this.downloadLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.downloadLabel.Location = new System.Drawing.Point(0, 326);
+            this.downloadLabel.Name = "downloadLabel";
+            this.downloadLabel.Padding = new System.Windows.Forms.Padding(10, 0, 0, 10);
+            this.downloadLabel.Size = new System.Drawing.Size(98, 25);
+            this.downloadLabel.TabIndex = 0;
+            this.downloadLabel.Text = "downloadLabel";
             // 
             // statusLabel
             // 
             this.statusLabel.AutoSize = true;
             this.statusLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusLabel.Location = new System.Drawing.Point(0, 316);
+            this.statusLabel.Location = new System.Drawing.Point(0, 281);
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Padding = new System.Windows.Forms.Padding(10, 20, 10, 10);
-            this.statusLabel.Size = new System.Drawing.Size(86, 45);
+            this.statusLabel.Padding = new System.Windows.Forms.Padding(10, 20, 0, 10);
+            this.statusLabel.Size = new System.Drawing.Size(76, 45);
             this.statusLabel.TabIndex = 0;
             this.statusLabel.Text = "statusLabel";
-            // 
-            // fullButton
-            // 
-            this.fullButton.AutoSize = true;
-            this.fullButton.BackColor = System.Drawing.Color.Transparent;
-            this.fullButton.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.fullButton.Enabled = false;
-            this.fullButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
-            this.fullButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.fullButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.fullButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.fullButton.Location = new System.Drawing.Point(0, 175);
-            this.fullButton.Margin = new System.Windows.Forms.Padding(10);
-            this.fullButton.Name = "fullButton";
-            this.fullButton.Padding = new System.Windows.Forms.Padding(10);
-            this.fullButton.Size = new System.Drawing.Size(384, 47);
-            this.fullButton.TabIndex = 0;
-            this.fullButton.TabStop = false;
-            this.fullButton.Text = "전체 한글 패치";
-            this.fullButton.UseVisualStyleBackColor = false;
-            this.fullButton.Click += new System.EventHandler(this.fullButton_Click);
-            // 
-            // fontButton
-            // 
-            this.fontButton.AutoSize = true;
-            this.fontButton.BackColor = System.Drawing.Color.Transparent;
-            this.fontButton.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.fontButton.Enabled = false;
-            this.fontButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
-            this.fontButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.fontButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.fontButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.fontButton.Location = new System.Drawing.Point(0, 222);
-            this.fontButton.Margin = new System.Windows.Forms.Padding(10);
-            this.fontButton.Name = "fontButton";
-            this.fontButton.Padding = new System.Windows.Forms.Padding(10);
-            this.fontButton.Size = new System.Drawing.Size(384, 47);
-            this.fontButton.TabIndex = 0;
-            this.fontButton.TabStop = false;
-            this.fontButton.Text = "채팅만 패치";
-            this.fontButton.UseVisualStyleBackColor = false;
-            this.fontButton.Click += new System.EventHandler(this.fontButton_Click);
             // 
             // removeButton
             // 
@@ -103,7 +99,7 @@
             this.removeButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.removeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.removeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.removeButton.Location = new System.Drawing.Point(0, 269);
+            this.removeButton.Location = new System.Drawing.Point(0, 234);
             this.removeButton.Margin = new System.Windows.Forms.Padding(10);
             this.removeButton.Name = "removeButton";
             this.removeButton.Padding = new System.Windows.Forms.Padding(10);
@@ -114,7 +110,55 @@
             this.removeButton.UseVisualStyleBackColor = false;
             this.removeButton.Click += new System.EventHandler(this.removeButton_Click);
             // 
-            // FfxivKoreanPatch
+            // chatOnlyInstallWorker
+            // 
+            this.chatOnlyInstallWorker.WorkerReportsProgress = true;
+            this.chatOnlyInstallWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.chatOnlyInstallWorker_DoWork);
+            this.chatOnlyInstallWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
+            // 
+            // chatOnlyInstallButton
+            // 
+            this.chatOnlyInstallButton.AutoSize = true;
+            this.chatOnlyInstallButton.BackColor = System.Drawing.Color.Transparent;
+            this.chatOnlyInstallButton.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.chatOnlyInstallButton.Enabled = false;
+            this.chatOnlyInstallButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.chatOnlyInstallButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            this.chatOnlyInstallButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.chatOnlyInstallButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.chatOnlyInstallButton.Location = new System.Drawing.Point(0, 187);
+            this.chatOnlyInstallButton.Margin = new System.Windows.Forms.Padding(10);
+            this.chatOnlyInstallButton.Name = "chatOnlyInstallButton";
+            this.chatOnlyInstallButton.Padding = new System.Windows.Forms.Padding(10);
+            this.chatOnlyInstallButton.Size = new System.Drawing.Size(384, 47);
+            this.chatOnlyInstallButton.TabIndex = 0;
+            this.chatOnlyInstallButton.TabStop = false;
+            this.chatOnlyInstallButton.Text = "채팅만 패치";
+            this.chatOnlyInstallButton.UseVisualStyleBackColor = false;
+            this.chatOnlyInstallButton.Click += new System.EventHandler(this.chatOnlyInstallButton_Click);
+            // 
+            // installButton
+            // 
+            this.installButton.AutoSize = true;
+            this.installButton.BackColor = System.Drawing.Color.Transparent;
+            this.installButton.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.installButton.Enabled = false;
+            this.installButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.installButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            this.installButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.installButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.installButton.Location = new System.Drawing.Point(0, 140);
+            this.installButton.Margin = new System.Windows.Forms.Padding(10);
+            this.installButton.Name = "installButton";
+            this.installButton.Padding = new System.Windows.Forms.Padding(10);
+            this.installButton.Size = new System.Drawing.Size(384, 47);
+            this.installButton.TabIndex = 0;
+            this.installButton.TabStop = false;
+            this.installButton.Text = "전체 한글 패치";
+            this.installButton.UseVisualStyleBackColor = false;
+            this.installButton.Click += new System.EventHandler(this.installButton_Click);
+            // 
+            // FFXIVKoreanPatch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -122,10 +166,12 @@
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(384, 361);
-            this.Controls.Add(this.fullButton);
-            this.Controls.Add(this.fontButton);
+            this.Controls.Add(this.installButton);
+            this.Controls.Add(this.chatOnlyInstallButton);
             this.Controls.Add(this.removeButton);
             this.Controls.Add(this.statusLabel);
+            this.Controls.Add(this.downloadLabel);
+            this.Controls.Add(this.progressBar);
             this.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(239)))), ((int)(((byte)(239)))), ((int)(((byte)(239)))));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -133,7 +179,7 @@
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "FfxivKoreanPatch";
+            this.Name = "FFXIVKoreanPatch";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "FFXIV 한글 패치";
@@ -145,9 +191,14 @@
         #endregion
 
         private System.ComponentModel.BackgroundWorker initialChecker;
+        private System.ComponentModel.BackgroundWorker installWorker;
+        private System.ComponentModel.BackgroundWorker removeWorker;
+        private System.Windows.Forms.ProgressBar progressBar;
+        private System.Windows.Forms.Label downloadLabel;
         private System.Windows.Forms.Label statusLabel;
-        private System.Windows.Forms.Button fullButton;
-        private System.Windows.Forms.Button fontButton;
         private System.Windows.Forms.Button removeButton;
+        private System.ComponentModel.BackgroundWorker chatOnlyInstallWorker;
+        private System.Windows.Forms.Button chatOnlyInstallButton;
+        private System.Windows.Forms.Button installButton;
     }
 }

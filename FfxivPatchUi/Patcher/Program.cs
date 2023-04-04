@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.IO;
 using System.Threading;
 
-namespace FFXIVKoreanPatch
+namespace FFXIVKoreanPatch.Patcher
 {
+    // Worker process for FFXIVKoreanPatch that do stuff that may require administrator access.
     internal class Program
     {
         private static string targetDir = string.Empty;
@@ -28,33 +30,35 @@ namespace FFXIVKoreanPatch
         };
 
         // args[0] -> operation mode.
-        //         -> 0 = install full korean patch.
-        //         -> 1 = install only font patch.
-        //         -> 2 = remove korean patch and restore original.
-        // args[1] -> path to the ffxiv client.
+        //         -> 0 = install korean chat registry.
+        //         -> 1 = install full korean patch.
+        //         -> 2 = install chat only korean patch.
+        //         -> 3 = remove korean patch and restore original.
+        // args[1] -> path to the FFXIV client.
         // args[2] -> path to the cached korean patch files.
         static void Main(string[] args)
         {
             // Check arguments.
             if (args.Length != 3) return;
-            if (!Directory.Exists(args[1])) return;
-            if (!Directory.Exists(args[2])) return;
+            if (args[0] != "0" && !Directory.Exists(args[1])) return;
+            if (args[0] != "0" && !Directory.Exists(args[2])) return;
 
             // Populate paths.
             targetDir = args[1];
             distribDir = args[2];
 
-            Cleanup();
-
             switch (args[0])
             {
                 case "0":
-                    InstallFull();
+                    InstallRegistry();
                     break;
                 case "1":
-                    InstallFont();
+                    InstallFull();
                     break;
                 case "2":
+                    InstallChatOnly();
+                    break;
+                case "3":
                     Remove();
                     break;
             }
@@ -64,33 +68,42 @@ namespace FFXIVKoreanPatch
             Thread.Sleep(5000);
         }
 
-        // This cleans up old korean chat patch with dinput hook.
-        static void Cleanup()
+        // This installs korean chat registry.
+        static void InstallRegistry()
         {
-            string dllPath = Path.Combine(targetDir, "dinput8.dll");
-            string dataDir = Path.Combine(targetDir, "data");
-
-            if (File.Exists(dllPath)) File.Delete(dllPath);
-            if (Directory.Exists(dataDir)) Directory.Delete(dataDir, true);
-        }
-
-        // This installs font and text patches.
-        static void InstallFull()
-        {
-            InstallFont();
-
-            foreach (string fullPatchFile in fullPatchFiles)
+            using (RegistryKey keyboardLayoutKey = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Keyboard Layout", true))
             {
-                File.Copy(Path.Combine(distribDir, fullPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fullPatchFile), true);
+                if (keyboardLayoutKey != null)
+                {
+                    keyboardLayoutKey.SetValue("Scancode Map", new byte[]
+                    {
+                        0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00,
+                        0x02, 0x00, 0x00, 0x00,
+                        0x72, 0x00, 0x38, 0xe0,
+                        0x00, 0x00, 0x00, 0x00
+                    });
+                }
             }
         }
 
-        // This installs font patch.
-        static void InstallFont()
+        // This installs full korean patch.
+        static void InstallFull()
+        {
+            foreach (string fullPatchFile in fullPatchFiles)
+            {
+                File.Copy(Path.Combine(distribDir, fullPatchFile), Path.Combine(targetDir, "sqpack", "ffxiv", fullPatchFile), true);
+            }
+
+            InstallChatOnly();
+        }
+
+        // This installs font only.
+        static void InstallChatOnly()
         {
             foreach (string fontPatchFile in fontPatchFiles)
             {
-                File.Copy(Path.Combine(distribDir, fontPatchFile), Path.Combine(targetDir, "sqpack/ffxiv", fontPatchFile), true);
+                File.Copy(Path.Combine(distribDir, fontPatchFile), Path.Combine(targetDir, "sqpack", "ffxiv", fontPatchFile), true);
             }
         }
 
@@ -99,7 +112,7 @@ namespace FFXIVKoreanPatch
         {
             foreach (string restoreFile in restoreFiles)
             {
-                File.Copy(Path.Combine(distribDir, "orig", restoreFile), Path.Combine(targetDir, "sqpack/ffxiv", restoreFile), true);
+                File.Copy(Path.Combine(distribDir, "orig", restoreFile), Path.Combine(targetDir, "sqpack", "ffxiv", restoreFile), true);
             }
         }
     }

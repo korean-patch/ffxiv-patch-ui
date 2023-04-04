@@ -1,49 +1,48 @@
-﻿using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FFXIVKoreanPatch
+namespace FFXIVKoreanPatch.Main
 {
-    public partial class FfxivKoreanPatch : Form
+    public partial class FFXIVKoreanPatch : Form
     {
+        // S3 server URL that hosts distributed patch files.
+        private const string serverUrl = "https://ffxiv-korean-patch.s3.us-west-2.amazonaws.com";
+
+        // Path for the main patch program.
         private string mainPath = string.Empty;
-        private string mainFileName = "FFXIVKoreanPatch";
-        private string mainVersionPath = string.Empty;
-        private string mainVersionFileName = "MainVersion";
+        private const string mainFileName = "FFXIVKoreanPatch";
+        private string mainTempPath = string.Empty;
 
+        // Path for the patcher program.
         private string patcherPath = string.Empty;
-        private string patcherFileName = "FFXIVKoreanPatcher";
+        private const string patcherFileName = "FFXIVKoreanPatcher";
 
-        private string registryInstallerPath = string.Empty;
-        private string registryInstallerFileName = "FFXIVRegistryInstaller";
-
+        // Path for the updater program.
         private string updaterPath = string.Empty;
-        private string updaterFileName = "FFXIVUpdater";
+        private const string updaterFileName = "FFXIVKoreanUpdater";
 
-        private string distribPath = string.Empty;
-        private string distribDirName = "distrib";
+        // Directory for the distributed patch files.
+        private string distribDir = string.Empty;
 
+        // Process names to check for before doing the patch.
         private string[] gameProcessNames = new string[]
         {
-            "ffxivboot",
-            "ffxivboot64",
-            "ffxivlauncher",
-            "ffxivlauncher64",
-            "ffxiv",
-            "ffxiv_dx11"
+            "ffxivboot", "ffxivboot64",
+            "ffxivlauncher", "ffxivlauncher64",
+            "ffxiv", "ffxiv_dx11"
         };
 
+        // List of known files that will be used to verify installation path.
         private string[] requiredFiles = new string[]
         {
             "ffxiv_dx11.exe",
@@ -54,6 +53,7 @@ namespace FFXIVKoreanPatch
             "../boot/ffxivboot.exe"
         };
 
+        // Scancode Map value for registry.
         private byte[] scancodeMap = new byte[]
         {
             0x00, 0x00, 0x00, 0x00,
@@ -63,64 +63,81 @@ namespace FFXIVKoreanPatch
             0x00, 0x00, 0x00, 0x00
         };
 
-        private string githubReleaseApiUrl = "https://api.github.com/repos/korean-patch/ffxiv-patch-ui/releases/latest";
-        private string distribUrl = "https://korean-patch.github.io/ffxiv-korean-patch/distrib";
+        // Name of the version file that denotes target game client version for the patch.
+        private const string versionFileName = "ffxivgame.ver";
 
-        private string[] distribFiles = new string[]
+        // List of distributed patch file names.
+        private string[] distributedFileNames = new string[]
         {
-            "ffxivgame.ver",
             "000000.win32.dat1",
             "000000.win32.index",
-            "orig/000000.win32.index",
             "0a0000.win32.dat1",
-            "0a0000.win32.index",
-            "orig/0a0000.win32.index"
+            "0a0000.win32.index"
         };
 
+        // List of unpatched original file names.
+        private string[] distributedOrigFileNames = new string[]
+        {
+            "000000.win32.index",
+            "0a0000.win32.index"
+        };
+
+        // Target client directory.
         private string targetDir = string.Empty;
+
+        // Target client version.
         private string targetVersion = string.Empty;
 
-        public FfxivKoreanPatch()
+        public FFXIVKoreanPatch()
         {
             InitializeComponent();
 
             // Adjust the background to apply gradient effect.
             AdjustBackground();
 
-            // Run the initial checker to verify and set up the environment.
+            // Empty the labels.
+            statusLabel.Text = "";
+            downloadLabel.Text = "";
+
+            // Run the initial checker to verify and set up environment.
             initialChecker.RunWorkerAsync();
         }
 
+        // Grab the background from the form and apply gradient effect.
         private void AdjustBackground()
         {
             // Get the background image as Bitmap first.
             Bitmap origImage = (Bitmap)BackgroundImage;
 
             // Create a new image that will be used as a new background.
-            // This should have the same width as the form, and the same width:height ratio.
+            // This should have the same width as the form, and the same width-height ratio.
             Bitmap newImage = new Bitmap(ClientSize.Width, ClientSize.Width * origImage.Height / origImage.Width);
             newImage.SetResolution(origImage.HorizontalResolution, origImage.VerticalResolution);
 
             // Starting drawing in the new image...
             using (Graphics g = Graphics.FromImage(newImage))
             {
-                // First draw a linear gradient with the current form's back color, going transparent at bottom.
+                // Prepare a rectangle to copy over the original image.
                 Rectangle rect = new Rectangle(0, 0, newImage.Width, newImage.Height);
 
-                // Now let's blend the original image...
+                // Set Graphics parameters...
                 g.CompositingMode = CompositingMode.SourceOver;
                 g.CompositingQuality = CompositingQuality.HighQuality;
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.SmoothingMode = SmoothingMode.HighQuality;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
+                // Copy over the original image.
                 using (ImageAttributes wrapMode = new ImageAttributes())
                 {
                     wrapMode.SetWrapMode(WrapMode.TileFlipXY);
                     g.DrawImage(origImage, rect, 0, 0, origImage.Width, origImage.Height, GraphicsUnit.Pixel, wrapMode);
                 }
 
+                // Prepare a linear gradient brush that is transparent on top and form back color at the bottom.
                 LinearGradientBrush brush = new LinearGradientBrush(rect, Color.Transparent, BackColor, 90f);
+
+                // Draw on top of the original image.
                 g.FillRectangle(brush, rect);
             }
 
@@ -128,498 +145,60 @@ namespace FFXIVKoreanPatch
             BackgroundImage = newImage;
         }
 
-        // Do some initial setup work before patch can be applied.
-        private void initialChecker_DoWork(object sender, DoWorkEventArgs e)
+        // Display message box from UI thread.
+        private DialogResult ShowMessageBox(MessageBoxButtons buttons, MessageBoxIcon icon, params string[] lines)
         {
-            // Wait until the UI is ready.
-            while (!statusLabel.IsHandleCreated) { }
+            // Compile a single string from given text lines.
+            StringBuilder sb = new StringBuilder();
 
-            Invoke(new Action(() =>
+            for (int i = 0; i < lines.Length; i++)
             {
-                statusLabel.Text = "환경 체크 중...";
-            }));
+                sb.Append(lines[i]);
 
-            // Check if the patch program is already running, and terminate if it is.
-            if (Process.GetProcessesByName(mainFileName).Length > 1)
-            {
-                MessageBox.Show(
-                    "파이널 판타지 14 한글 패치 프로그램이 이미 실행중이에요.",
-                    Text,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly);
-
-                Invoke(new Action(() =>
+                // Append 2 new lines in between...
+                if (i != lines.Length - 1)
                 {
-                    Close();
-                }));
-
-                return;
-            }
-
-            // Check if ffxiv game process is running.
-            if (Process.GetProcesses().Any(p => gameProcessNames.Contains(p.ProcessName.ToLower())))
-            {
-                MessageBox.Show(
-                    "파이널 판타지 14가 이미 실행중이에요." + Environment.NewLine + Environment.NewLine +
-                    "파이널 판타지 14를 종료한 후 한글 패치 프로그램을 다시 실행해주세요.",
-                    Text,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly);
-
-                Invoke(new Action(() =>
-                {
-                    Close();
-                }));
-
-                return;
-            }
-
-            // Check if any worker processes are already running and kill them if they are.
-            foreach (Process p in Process.GetProcesses().Where(
-                p => new string[] { patcherFileName, registryInstallerFileName, updaterFileName}.Contains(p.ProcessName)))
-            {
-                p.Kill();
-                p.WaitForExit();
-            }
-
-            // Populate necessary paths.
-            mainPath = Application.ExecutablePath;
-            mainVersionPath = Path.Combine(Application.CommonAppDataPath, mainVersionFileName);
-
-            patcherPath = Path.Combine(Application.CommonAppDataPath, $"{patcherFileName}.exe");
-            registryInstallerPath = Path.Combine(Application.CommonAppDataPath, $"{registryInstallerFileName}.exe");
-            updaterPath = Path.Combine(Application.CommonAppDataPath, $"{updaterFileName}.exe");
-
-            distribPath = Path.Combine(Application.CommonAppDataPath, distribDirName);
-            if (Directory.Exists(distribPath)) Directory.Delete(distribPath, true);
-            Directory.CreateDirectory(distribPath);
-
-            // Grab the worker processes from github release.
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = "필요한 프로그램 가져오는 중...";
-            }));
-
-            JObject mainAsset = null;
-
-            try
-            {
-                // Get the JSON information about the latest release.
-                byte[] latestRelease = DownloadFile(githubReleaseApiUrl);
-                if (latestRelease == null) throw new Exception();
-                JObject releaseObject = JObject.Parse(Encoding.UTF8.GetString(latestRelease));
-
-                // Get the asset information for the executables.
-                JObject[] assetsArray = ((JArray)releaseObject.GetValue("assets")).Select(asset => (JObject)asset).ToArray();
-
-                // Get versions (ids) from asset information.
-                mainAsset = FindAssetByName(assetsArray, $"{mainFileName}.exe");
-                JObject patcherAsset = FindAssetByName(assetsArray, $"{patcherFileName}.exe");
-                JObject registryInstallerAsset = FindAssetByName(assetsArray, $"{registryInstallerFileName}.exe");
-                JObject updaterAsset = FindAssetByName(assetsArray, $"{updaterFileName}.exe");
-
-                // Get the executables.
-                DownloadAsset(patcherAsset, patcherPath);
-                DownloadAsset(registryInstallerAsset, registryInstallerPath);
-                DownloadAsset(updaterAsset, updaterPath);
-            }
-            catch
-            {
-                MessageBox.Show(
-                    "필요한 프로그램들을 가져오는데 실패했어요." + Environment.NewLine + Environment.NewLine +
-                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.",
-                    Text,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly);
-
-                Invoke(new Action(() =>
-                {
-                    Close();
-                }));
-
-                return;
-            }
-
-            // Check main executable's version and update if necessary.
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = "프로그램 버전 확인 중...";
-            }));
-
-            try
-            {
-                // Check if version matches...
-                if (!IsVersionMatch(mainVersionPath, mainAsset))
-                {
-                    // Call updater to update main executable.
-                    MessageBox.Show(
-                        "업데이트가 필요해 프로그램을 종료할 거예요." + Environment.NewLine + Environment.NewLine +
-                        "업데이트가 완료되면 자동으로 재실행할게요.",
-                        Text,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly);
-
-                    Process.Start(new ProcessStartInfo(updaterPath,
-                        $"\"{mainPath}\" \"{mainVersionPath}\" \"{GetDownloadUrlFromAsset(mainAsset)}\" \"{mainAsset.GetValue("id").ToString()}\""));
-
-                    Invoke(new Action(() =>
-                    {
-                        Close();
-                    }));
-
-                    return;
-                }
-            }
-            catch
-            {
-                MessageBox.Show(
-                    "버전을 확인하는데 실패했어요." + Environment.NewLine + Environment.NewLine +
-                    "문제가 지속될 경우 디스코드를 통해 문의해주세요.",
-                    Text,
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly);
-
-                Invoke(new Action(() =>
-                {
-                    Close();
-                }));
-
-                return;
-            }
-
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = "파이널 판타지 14 클라이언트를 찾는 중...";
-            }));
-
-            // Check Windows registry uninstall list to find the ffxiv installation.
-            string[] uninstallKeyNames = new string[]
-            {
-                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-                "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
-            };
-
-            string[] uninstallSteamKeyNames = new string[]
-            {
-                $"{uninstallKeyNames[0]}\\Steam App 39210",
-                $"{uninstallKeyNames[1]}\\Steam App 39210"
-            };
-
-            // Check steam registry first...
-            foreach (string uninstallSteamKeyName in uninstallSteamKeyNames)
-            {
-                using (RegistryKey uninstallKey = Registry.LocalMachine.OpenSubKey(uninstallSteamKeyName))
-                {
-                    if (uninstallKey == null) continue;
-                    
-                    object installLocation = uninstallKey.GetValue("InstallLocation");
-                    if (installLocation == null) continue;
-
-                    targetDir = CheckTargetDir(Path.GetFullPath(Path.Combine(installLocation.ToString(), "game")));
-                    break;
+                    sb.Append(Environment.NewLine);
+                    sb.Append(Environment.NewLine);
                 }
             }
 
-            // If target directory is still not set, search for square enix installation path.
-            if (string.IsNullOrEmpty(targetDir))
+            // Display message box on UI thread with given parameters.
+            return (DialogResult)Invoke(new Func<DialogResult>(() =>
             {
-                foreach (string uninstallKeyName in uninstallKeyNames)
-                {
-                    using (RegistryKey uninstallKey = Registry.LocalMachine.OpenSubKey(uninstallKeyName))
-                    {
-                        if (uninstallKey == null) continue;
-
-                        foreach (string subKeyName in uninstallKey.GetSubKeyNames())
-                        {
-                            using (RegistryKey subKey = uninstallKey.OpenSubKey(subKeyName))
-                            {
-                                if (subKey == null) continue;
-
-                                object displayName = subKey.GetValue("DisplayName");
-                                if (displayName == null || displayName.ToString() != "FINAL FANTASY XIV ONLINE") continue;
-
-                                object iconPath = subKey.GetValue("DisplayIcon");
-                                if (iconPath == null) continue;
-
-                                targetDir = CheckTargetDir(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(iconPath.ToString()), "../game")));
-                                break;
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(targetDir)) break;
-                    }
-                }
-            }
-
-            // If the installation location is found, ask user to confirm.
-            bool isTargetDirVerified = false;
-
-            if (!string.IsNullOrEmpty(targetDir))
-            {
-                isTargetDirVerified = MessageBox.Show(
-                    "다음 위치에서 파이널 판타지 14 클라이언트가 발견되었어요." + Environment.NewLine + Environment.NewLine +
-                    targetDir + Environment.NewLine + Environment.NewLine +
-                    "이 클라이언트에 한글 패치를 설치할까요?",
-                    Text,
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Information,
-                    MessageBoxDefaultButton.Button1,
-                    MessageBoxOptions.DefaultDesktopOnly) == DialogResult.Yes;
-            }
-
-            // If the target directory is not verified, let user choose.
-            if (!isTargetDirVerified)
-            {
-                Invoke(new Action(() =>
-                {
-                    MessageBox.Show(
-                        "파이널 판타지 14 클라이언트가 설치된 장소에서 ffxiv_dx11.exe 파일을 찾아 선택해주세요." + Environment.NewLine + Environment.NewLine +
-                        "(보통 game 폴더 내부에 있어요.)",
-                        Text,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information,
-                        MessageBoxDefaultButton.Button1,
-                        MessageBoxOptions.DefaultDesktopOnly);
-
-                    OpenFileDialog dialog = new OpenFileDialog()
-                    {
-                        CheckFileExists = true,
-                        CheckPathExists = true,
-                        DefaultExt = "exe",
-                        Filter = "FINAL FANTASY XIV|ffxiv_dx11.exe",
-                        Multiselect = false,
-                        Title = "ffxiv_dx11.exe 파일을 선택해주세요..."
-                    };
-                    
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        targetDir = CheckTargetDir(Path.GetFullPath(Path.GetDirectoryName(dialog.FileName)));
-
-                        if (string.IsNullOrEmpty(targetDir))
-                        {
-                            MessageBox.Show(
-                                "선택하신 경로가 올바르지 않아요.",
-                                Text,
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error,
-                                MessageBoxDefaultButton.Button1,
-                                MessageBoxOptions.DefaultDesktopOnly);
-                            Close();
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "선택하신 경로가 올바르지 않아요.",
-                            Text,
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error,
-                            MessageBoxDefaultButton.Button1,
-                            MessageBoxOptions.DefaultDesktopOnly);
-                        Close();
-                    }
-                }));
-            }
-
-            // If target directory is still invalid, quit.
-            if (string.IsNullOrEmpty(targetDir))
-            {
-                Invoke(new Action(() =>
-                {
-                    Close();
-                }));
-
-                return;
-            }
-
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = "한글 폰트 설치 확인 중...";
-            }));
-
-            // Check registry for scancode map.
-            using (RegistryKey keyboardLayoutKey = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Keyboard Layout"))
-            {
-                if (keyboardLayoutKey != null)
-                {
-                    object scancodeMap = keyboardLayoutKey.GetValue("Scancode Map");
-
-                    // If scancode map doesn't exist or is invalid...
-                    if (scancodeMap == null || !this.scancodeMap.SequenceEqual((byte[])scancodeMap))
-                    {
-                        // Install using registryInstaller.
-                        Invoke(new Action(() =>
-                        {
-                            statusLabel.Text = "한글 폰트 레지스트리 설정 중...";
-
-                            MessageBox.Show(
-                                "한글 폰트 레지스트리를 설정할게요." + Environment.NewLine + Environment.NewLine +
-                                "설정이 끝난 후 컴퓨터를 재시작하지 않으면 파이널 판타지 14 클라이언트 내부에서 한/영 키 입력이 제대로 동작하지 않을 수 있어요.",
-                                Text,
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Information,
-                                MessageBoxDefaultButton.Button1,
-                                MessageBoxOptions.DefaultDesktopOnly);
-
-                            Process p = Process.Start(new ProcessStartInfo(registryInstallerPath)
-                            {
-                                UseShellExecute = true,
-                                Verb = "runas"
-                            });
-
-                            if (p == null)
-                            {
-                                MessageBox.Show(
-                                    "한글 폰트 레지스트리 설정 중 문제가 발생했어요." + Environment.NewLine + Environment.NewLine +
-                                    "설치를 다시 시도해보세요.",
-                                    Text,
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error,
-                                    MessageBoxDefaultButton.Button1,
-                                    MessageBoxOptions.DefaultDesktopOnly);
-                                Close();
-                            }
-                            else
-                            {
-                                p.WaitForExit();
-
-                                MessageBox.Show(
-                                    "한글 폰트 레지스트리 설정이 완료되었어요." + Environment.NewLine + Environment.NewLine +
-                                    "컴퓨터를 재시작한 후 다시 실행해주세요.",
-                                    Text,
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information,
-                                    MessageBoxDefaultButton.Button1,
-                                    MessageBoxOptions.DefaultDesktopOnly);
-                                Close();
-                            }
-                        }));
-
-                        return;
-                    }
-                }
-            }
-
-            // Check the target client version.
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = "클라이언트 버전 체크 중...";
-            }));
-
-            targetVersion = File.ReadAllText(Path.Combine(targetDir, distribFiles[0]));
-
-            // Retrieve the korean patch based on the client version.
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = $"서버에서 한글 패치 가져오는 중... 버전 {targetVersion}";
-            }));
-
-            // Download patch files for the detected client version.
-            foreach (string distribFile in distribFiles)
-            {
-                string url = $"{distribUrl}/{targetVersion}/{distribFile}";
-                byte[] file = DownloadFile(url);
-
-                if (file == null)
-                {
-                    MessageBox.Show(
-                        "다음 파일을 다운로드하는데 실패했어요." + Environment.NewLine + Environment.NewLine +
-                        url + Environment.NewLine + Environment.NewLine +
-                        "문제가 지속되면 디스코드를 통해 문의해주세요.",
-                        Text,
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error,
-                        MessageBoxDefaultButton.Button1,
-                        MessageBoxOptions.DefaultDesktopOnly);
-
-                    Invoke(new Action(() =>
-                    {
-                        Close();
-                    }));
-
-                    return;
-                }
-                else
-                {
-                    string filePath = Path.Combine(distribPath, distribFile);
-                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                    File.WriteAllBytes(filePath, file);
-                }
-            }
-
-            // All done!
-            Invoke(new Action(() =>
-            {
-                statusLabel.Text = $"버전 {targetVersion}";
-                fullButton.Enabled = true;
-                fontButton.Enabled = true;
-                removeButton.Enabled = true;
+                return MessageBox.Show(sb.ToString(), Text, buttons, icon);
             }));
         }
 
-        // Downloads a file from given url and return it as a byte array.
-        private byte[] DownloadFile(string url)
+        // Update status label text always from UI thread.
+        private void UpdateStatusLabel(string text)
         {
-            using (HttpClient client = new HttpClient())
+            Invoke(new Action(() =>
             {
-                // Github request header.
-                client.DefaultRequestHeaders.Add("User-Agent", "request");
-                client.Timeout = TimeSpan.FromSeconds(30);
-
-                HttpResponseMessage responseMessage = client.GetAsync(url).GetAwaiter().GetResult();
-
-                // Do a quick status check and silently return null if something failed.
-                if (responseMessage == null || responseMessage.StatusCode != HttpStatusCode.OK)
-                {
-                    return null;
-                }
-
-                return responseMessage.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
-            }
+                statusLabel.Text = text;
+            }));
         }
 
-        // Find the asset from assets using asset name.
-        private JObject FindAssetByName(JObject[] assetsArray, string assetName)
+        // Update download label text always from UI thread.
+        private void UpdateDownloadLabel(string text)
         {
-            return assetsArray.First(asset => asset.GetValue("name").ToString() == assetName);
+            Invoke(new Action(() =>
+            {
+                downloadLabel.Text = text;
+            }));
         }
 
-        private string GetDownloadUrlFromAsset(JObject asset)
+        // Close the form always from UI thread.
+        private void CloseForm()
         {
-            return asset.GetValue("browser_download_url").ToString();
+            Invoke(new Action(() =>
+            {
+                Close();
+            }));
         }
 
-        // Download the asset.
-        private void DownloadAsset(JObject asset, string assetPath)
-        {
-            // Download the latest executable as byte array.
-            byte[] executable = DownloadFile(GetDownloadUrlFromAsset(asset));
-            if (executable == null) throw new Exception();
-
-            // Write the executable to designated path.
-            File.WriteAllBytes(assetPath, executable);
-        }
-
-        // Read the version file and check if it matches with the asset's version.
-        private bool IsVersionMatch(string versionPath, JObject asset)
-        {
-            // If the file does not exist, it is automatic false.
-            if (!File.Exists(versionPath)) return false;
-
-            return File.ReadAllText(versionPath) == asset.GetValue("id").ToString();
-        }
-
-        // Validates target directory.
+        // Validates the target client directory by checking if required files are present.
+        // Return the directory back if valid, else return null.
         private string CheckTargetDir(string targetDir)
         {
             if (!Directory.Exists(targetDir)) return null;
@@ -628,64 +207,148 @@ namespace FFXIVKoreanPatch
             return targetDir;
         }
 
-        private void fullButton_Click(object sender, EventArgs e)
+        // Get the SHA1 checksum from a file.
+        private string ComputeSHA1(string filePath)
         {
-            fullButton.Enabled = false;
-            fontButton.Enabled = false;
-            removeButton.Enabled = false;
-
-            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"0 \"{targetDir}\" \"{distribPath}\"")
+            using (SHA1CryptoServiceProvider cryptoProvider = new SHA1CryptoServiceProvider())
             {
-                UseShellExecute = true,
-                Verb = "runas"
-            });
-
-            if (p != null)
-            {
-                p.WaitForExit();
+                return BitConverter.ToString(cryptoProvider.ComputeHash(File.ReadAllBytes(filePath))).Replace("-", "");
             }
-
-            Close();
         }
 
-        private void fontButton_Click(object sender, EventArgs e)
+        // Downloads a file from given url while reporting progress on given background worker, then return the response as byte array.
+        // If file path is passed, it will save the response to a file stream instead of storing in memory.
+        private byte[] DownloadFile(string url, string fileName, BackgroundWorker worker, string filePath = null)
         {
-            fullButton.Enabled = false;
-            fontButton.Enabled = false;
-            removeButton.Enabled = false;
-
-            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"1 \"{targetDir}\" \"{distribPath}\"")
+            using (HttpClient client = new HttpClient())
             {
-                UseShellExecute = true,
-                Verb = "runas"
-            });
+                // Default user agent and timeout values.
+                client.DefaultRequestHeaders.Add("User-Agent", "request");
+                client.Timeout = TimeSpan.FromMinutes(5);
 
-            if (p != null)
-            {
-                p.WaitForExit();
+                // Indicate what file we're downloading...
+                UpdateDownloadLabel($"다운로드중: {fileName}");
+
+                // Download the header first to look at the content length.
+                using (HttpResponseMessage responseMessage = client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult())
+                {
+                    if (responseMessage.Content.Headers.ContentLength != null)
+                    {
+                        long contentLength = (long)responseMessage.Content.Headers.ContentLength;
+
+                        // Create a memory stream or file stream based on whether file path has been passed.
+                        Stream s;
+
+                        if (string.IsNullOrEmpty(filePath))
+                        {
+                            s = new MemoryStream();
+                        }
+                        else
+                        {
+                            s = new FileStream(filePath, FileMode.Create);
+                        }
+
+                        using (s)
+                        using (Stream inStream = responseMessage.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
+                        {
+                            // Create a progress reporter that reports the progress to the designated background worker.
+                            Progress<int> p = new Progress<int>(new Action<int>((value) =>
+                            {
+                                worker.ReportProgress(value);
+                            }));
+
+                            // Buffer size is 1/10 of the total content.
+                            // Grab data from http client stream and copy to destination stream.
+                            inStream.CopyToAsync(s, (int)(contentLength / 10), contentLength, p).GetAwaiter().GetResult();
+
+                            // Empty the progress bar after download is copmlete.
+                            worker.ReportProgress(0);
+
+                            // Reset the label.
+                            UpdateDownloadLabel("");
+
+                            // Return the downloaded data as byte array if file path was not specified.
+                            if (string.IsNullOrEmpty(filePath))
+                            {
+                                return ((MemoryStream)s).ToArray();
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
+                    }
+                }
             }
 
-            Close();
+            // If anything happened and didn't reach successful download, throw an exception.
+            throw new Exception($"다음 파일을 다운로드하는 중 오류가 발생하였습니다. {url}");
         }
 
-        private void removeButton_Click(object sender, EventArgs e)
+        // Check SHA1 checksum between given file and server record and return true if they match.
+        private bool CheckSHA1(string filePath, string url, string fileName, BackgroundWorker worker)
         {
-            fullButton.Enabled = false;
-            fontButton.Enabled = false;
-            removeButton.Enabled = false;
+            return ComputeSHA1(filePath) == Encoding.ASCII.GetString(DownloadFile(url, fileName, worker));
+        }
 
-            Process p = Process.Start(new ProcessStartInfo(patcherPath, $"2 \"{targetDir}\" \"{distribPath}\"")
-            {
-                UseShellExecute = true,
-                Verb = "runas"
-            });
+        // Check SHA1 with existing file and only download if checksum is different.
+        private void CheckAndDownload(string baseUrl, string fileName, string targetFilePath, BackgroundWorker worker)
+        {
+            // If target file does not exist, download is always required.
+            bool downloadRequired = !File.Exists(targetFilePath);
 
-            if (p != null)
+            // If target file exists, check SHA1 checksum and compare with the server.
+            if (!downloadRequired)
             {
-                p.WaitForExit();
+                // Compare SHA1 checksum.
+                downloadRequired = !CheckSHA1(targetFilePath, $"{baseUrl}/{fileName}.sha1", $"{fileName}.sha1", worker);
             }
 
-            Close();
+            // Do nothing if download is not required.
+            if (!downloadRequired) return;
+
+            // Download the file and save it.
+            DownloadFile($"{baseUrl}/{fileName}", fileName, worker, targetFilePath);
+        }
+    }
+
+    // Extending HTTP client stream to report download progress while copying.
+    public static class StreamExtensions
+    {
+        // Extending CopyToAsync to accept interface that reports an integer progress.
+        public static async Task CopyToAsync(this Stream source, Stream destination, int bufferSize, long totalLength, IProgress<int> progress)
+        {
+            // Check parameters.
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (!source.CanRead) throw new ArgumentException("Has to be readable.", nameof(source));
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
+            if (!destination.CanWrite) throw new ArgumentException("Has to be writable.", nameof(destination));
+            if (bufferSize < 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
+
+            // Make a buffer with given buffer size.
+            byte[] buffer = new byte[bufferSize];
+            long totalBytesRead = 0;
+            int bytesRead;
+            int progressReport = 0;
+
+            // Fill buffer.
+            while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) != 0)
+            {
+                // Write buffer to destination.
+                await destination.WriteAsync(buffer, 0, bytesRead).ConfigureAwait(false);
+
+                // Up the total counter.
+                totalBytesRead += bytesRead;
+                int newProgressReport = (int)(totalBytesRead * 100 / totalLength);
+
+                // Only report if progress became higher.
+                if (newProgressReport > progressReport)
+                {
+                    // Report the progress.
+                    progressReport = newProgressReport;
+                    progress.Report(progressReport);
+                }
+            }
         }
     }
 }
