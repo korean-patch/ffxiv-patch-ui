@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -17,6 +18,10 @@ namespace FFXIVKoreanPatch.Main
     {
         // S3 server URL that hosts distributed patch files.
         private const string serverUrl = "https://ffxiv-korean-patch.s3.us-west-2.amazonaws.com";
+
+        // Directory and path for the distributed programs.
+        private string programPath = string.Empty;
+        private string programDir = string.Empty;
 
         // Path for the main patch program.
         private string mainPath = string.Empty;
@@ -32,7 +37,12 @@ namespace FFXIVKoreanPatch.Main
         private const string updaterFileName = "FFXIVKoreanUpdater";
 
         // Directory for the distributed patch files.
+        private string distribPath = string.Empty;
         private string distribDir = string.Empty;
+
+        // Directory for the original patch files.
+        private string origPath = string.Empty;
+        private string origDir = string.Empty;
 
         // Process names to check for before doing the patch.
         private string[] gameProcessNames = new string[]
@@ -65,22 +75,6 @@ namespace FFXIVKoreanPatch.Main
 
         // Name of the version file that denotes target game client version for the patch.
         private const string versionFileName = "ffxivgame.ver";
-
-        // List of distributed patch file names.
-        private string[] distributedFileNames = new string[]
-        {
-            "000000.win32.dat1",
-            "000000.win32.index",
-            "0a0000.win32.dat1",
-            "0a0000.win32.index"
-        };
-
-        // List of unpatched original file names.
-        private string[] distributedOrigFileNames = new string[]
-        {
-            "000000.win32.index",
-            "0a0000.win32.index"
-        };
 
         // Target client directory.
         private string targetDir = string.Empty;
@@ -218,7 +212,7 @@ namespace FFXIVKoreanPatch.Main
 
         // Downloads a file from given url while reporting progress on given background worker, then return the response as byte array.
         // If file path is passed, it will save the response to a file stream instead of storing in memory.
-        private byte[] DownloadFile(string url, string fileName, BackgroundWorker worker, string filePath = null)
+        private byte[] DownloadFile(string url, string fileName, BackgroundWorker worker)
         {
             using (HttpClient client = new HttpClient())
             {
@@ -236,19 +230,8 @@ namespace FFXIVKoreanPatch.Main
                     {
                         long contentLength = (long)responseMessage.Content.Headers.ContentLength;
 
-                        // Create a memory stream or file stream based on whether file path has been passed.
-                        Stream s;
-
-                        if (string.IsNullOrEmpty(filePath))
-                        {
-                            s = new MemoryStream();
-                        }
-                        else
-                        {
-                            s = new FileStream(filePath, FileMode.Create);
-                        }
-
-                        using (s)
+                        // Create a memory stream and feed it with the client stream.
+                        using (MemoryStream ms = new MemoryStream())
                         using (Stream inStream = responseMessage.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
                         {
                             // Create a progress reporter that reports the progress to the designated background worker.
@@ -259,7 +242,7 @@ namespace FFXIVKoreanPatch.Main
 
                             // Buffer size is 1/10 of the total content.
                             // Grab data from http client stream and copy to destination stream.
-                            inStream.CopyToAsync(s, (int)(contentLength / 10), contentLength, p).GetAwaiter().GetResult();
+                            inStream.CopyToAsync(ms, (int)(contentLength / 10), contentLength, p).GetAwaiter().GetResult();
 
                             // Empty the progress bar after download is copmlete.
                             worker.ReportProgress(0);
@@ -267,15 +250,57 @@ namespace FFXIVKoreanPatch.Main
                             // Reset the label.
                             UpdateDownloadLabel("");
 
-                            // Return the downloaded data as byte array if file path was not specified.
-                            if (string.IsNullOrEmpty(filePath))
+                            // Return the downloaded data as byte array.
+                            return ms.ToArray();
+                        }
+                    }
+                }
+            }
+
+            // If anything happened and didn't reach successful download, throw an exception.
+            throw new Exception($"다음 파일을 다운로드하는 중 오류가 발생하였습니다. {url}");
+        }
+
+        // Downloads a file from given url while reporting progress on given background worker, then save it to disk.
+        private void DownloadAndSaveFile(string url, string filePath, string fileName, BackgroundWorker worker)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                // Default user agent and timeout values.
+                client.DefaultRequestHeaders.Add("User-Agent", "request");
+                client.Timeout = TimeSpan.FromMinutes(5);
+
+                // Indicate what file we're downloading...
+                UpdateDownloadLabel($"다운로드중: {fileName}");
+
+                // Download the header first to look at the content length.
+                using (HttpResponseMessage responseMessage = client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult())
+                {
+                    if (responseMessage.Content.Headers.ContentLength != null)
+                    {
+                        long contentLength = (long)responseMessage.Content.Headers.ContentLength;
+
+                        // Create a file stream and feed it with the client stream.
+                        using (FileStream fs = new FileStream(filePath, FileMode.Create))
+                        using (Stream inStream = responseMessage.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
+                        {
+                            // Create a progress reporter that reports the progress to the designated background worker.
+                            Progress<int> p = new Progress<int>(new Action<int>((value) =>
                             {
-                                return ((MemoryStream)s).ToArray();
-                            }
-                            else
-                            {
-                                return null;
-                            }
+                                worker.ReportProgress(value);
+                            }));
+
+                            // Buffer size is 1/10 of the total content.
+                            // Grab data from http client stream and copy to file stream.
+                            inStream.CopyToAsync(fs, (int)(contentLength / 10), contentLength, p).GetAwaiter().GetResult();
+
+                            // Empty the progress bar after download is complete.
+                            worker.ReportProgress(0);
+
+                            // Reset the label.
+                            UpdateDownloadLabel("");
+
+                            return;
                         }
                     }
                 }
@@ -292,7 +317,7 @@ namespace FFXIVKoreanPatch.Main
         }
 
         // Check SHA1 with existing file and only download if checksum is different.
-        private void CheckAndDownload(string baseUrl, string fileName, string targetFilePath, BackgroundWorker worker)
+        private bool CheckIfDownloadRequired(string url, string fileName, string targetFilePath, BackgroundWorker worker)
         {
             // If target file does not exist, download is always required.
             bool downloadRequired = !File.Exists(targetFilePath);
@@ -301,14 +326,29 @@ namespace FFXIVKoreanPatch.Main
             if (!downloadRequired)
             {
                 // Compare SHA1 checksum.
-                downloadRequired = !CheckSHA1(targetFilePath, $"{baseUrl}/{fileName}.sha1", $"{fileName}.sha1", worker);
+                downloadRequired = !CheckSHA1(targetFilePath, url, fileName, worker);
             }
 
-            // Do nothing if download is not required.
-            if (!downloadRequired) return;
+            return downloadRequired;
+        }
 
-            // Download the file and save it.
-            DownloadFile($"{baseUrl}/{fileName}", fileName, worker, targetFilePath);
+        // Extract given file to a folder.
+        private void ExtractToFolder(string filePath, string destinationName)
+        {
+            ZipFile.ExtractToDirectory(filePath, destinationName);
+        }
+
+        // Uncompress individual file.
+        private void UncompressFile(string filePath, string outPath)
+        {
+            using (FileStream inStream = new FileStream(filePath, FileMode.Open))
+            using (FileStream outStream = new FileStream(outPath, FileMode.Create))
+            using (GZipStream gzStream = new GZipStream(inStream, CompressionMode.Decompress))
+            {
+                gzStream.CopyTo(outStream);
+            }
+
+            File.Delete(filePath);
         }
     }
 
