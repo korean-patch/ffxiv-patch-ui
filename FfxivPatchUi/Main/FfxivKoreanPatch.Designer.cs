@@ -29,40 +29,20 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FFXIVKoreanPatch));
-            this.initialChecker = new System.ComponentModel.BackgroundWorker();
-            this.installWorker = new System.ComponentModel.BackgroundWorker();
-            this.removeWorker = new System.ComponentModel.BackgroundWorker();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.downloadLabel = new System.Windows.Forms.Label();
             this.statusLabel = new System.Windows.Forms.Label();
             this.removeButton = new System.Windows.Forms.Button();
-            this.chatOnlyInstallWorker = new System.ComponentModel.BackgroundWorker();
             this.chatOnlyInstallButton = new System.Windows.Forms.Button();
             this.installButton = new System.Windows.Forms.Button();
+            this.initialChecker = new System.ComponentModel.BackgroundWorker();
+            this.installWorker = new System.ComponentModel.BackgroundWorker();
             this.SuspendLayout();
-            // 
-            // initialChecker
-            // 
-            this.initialChecker.WorkerReportsProgress = true;
-            this.initialChecker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.initialChecker_DoWork);
-            this.initialChecker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
-            // 
-            // installWorker
-            // 
-            this.installWorker.WorkerReportsProgress = true;
-            this.installWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.installWorker_DoWork);
-            this.installWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
-            // 
-            // removeWorker
-            // 
-            this.removeWorker.WorkerReportsProgress = true;
-            this.removeWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.removeWorker_DoWork);
-            this.removeWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
             // 
             // progressBar
             // 
             this.progressBar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressBar.Location = new System.Drawing.Point(0, 351);
+            this.progressBar.Location = new System.Drawing.Point(0, 401);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(384, 10);
             this.progressBar.TabIndex = 0;
@@ -71,7 +51,7 @@
             // 
             this.downloadLabel.AutoSize = true;
             this.downloadLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.downloadLabel.Location = new System.Drawing.Point(0, 326);
+            this.downloadLabel.Location = new System.Drawing.Point(0, 376);
             this.downloadLabel.Name = "downloadLabel";
             this.downloadLabel.Padding = new System.Windows.Forms.Padding(10, 0, 0, 10);
             this.downloadLabel.Size = new System.Drawing.Size(98, 25);
@@ -82,7 +62,7 @@
             // 
             this.statusLabel.AutoSize = true;
             this.statusLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusLabel.Location = new System.Drawing.Point(0, 281);
+            this.statusLabel.Location = new System.Drawing.Point(0, 331);
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Padding = new System.Windows.Forms.Padding(10, 20, 0, 10);
             this.statusLabel.Size = new System.Drawing.Size(76, 45);
@@ -99,7 +79,7 @@
             this.removeButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.removeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.removeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.removeButton.Location = new System.Drawing.Point(0, 234);
+            this.removeButton.Location = new System.Drawing.Point(0, 284);
             this.removeButton.Margin = new System.Windows.Forms.Padding(10);
             this.removeButton.Name = "removeButton";
             this.removeButton.Padding = new System.Windows.Forms.Padding(10);
@@ -109,12 +89,6 @@
             this.removeButton.Text = "한글 패치 삭제";
             this.removeButton.UseVisualStyleBackColor = false;
             this.removeButton.Click += new System.EventHandler(this.removeButton_Click);
-            // 
-            // chatOnlyInstallWorker
-            // 
-            this.chatOnlyInstallWorker.WorkerReportsProgress = true;
-            this.chatOnlyInstallWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.chatOnlyInstallWorker_DoWork);
-            this.chatOnlyInstallWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.progressChanged);
             // 
             // chatOnlyInstallButton
             // 
@@ -126,14 +100,14 @@
             this.chatOnlyInstallButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.chatOnlyInstallButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.chatOnlyInstallButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.chatOnlyInstallButton.Location = new System.Drawing.Point(0, 187);
+            this.chatOnlyInstallButton.Location = new System.Drawing.Point(0, 237);
             this.chatOnlyInstallButton.Margin = new System.Windows.Forms.Padding(10);
             this.chatOnlyInstallButton.Name = "chatOnlyInstallButton";
             this.chatOnlyInstallButton.Padding = new System.Windows.Forms.Padding(10);
             this.chatOnlyInstallButton.Size = new System.Drawing.Size(384, 47);
             this.chatOnlyInstallButton.TabIndex = 0;
             this.chatOnlyInstallButton.TabStop = false;
-            this.chatOnlyInstallButton.Text = "채팅만 패치";
+            this.chatOnlyInstallButton.Text = "채팅만 설치";
             this.chatOnlyInstallButton.UseVisualStyleBackColor = false;
             this.chatOnlyInstallButton.Click += new System.EventHandler(this.chatOnlyInstallButton_Click);
             // 
@@ -147,7 +121,7 @@
             this.installButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.installButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.installButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.installButton.Location = new System.Drawing.Point(0, 140);
+            this.installButton.Location = new System.Drawing.Point(0, 190);
             this.installButton.Margin = new System.Windows.Forms.Padding(10);
             this.installButton.Name = "installButton";
             this.installButton.Padding = new System.Windows.Forms.Padding(10);
@@ -158,6 +132,18 @@
             this.installButton.UseVisualStyleBackColor = false;
             this.installButton.Click += new System.EventHandler(this.installButton_Click);
             // 
+            // initialChecker
+            // 
+            this.initialChecker.WorkerReportsProgress = true;
+            this.initialChecker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.initialChecker_DoWork);
+            this.initialChecker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.initialChecker_ProgressChanged);
+            // 
+            // installWorker
+            // 
+            this.installWorker.WorkerReportsProgress = true;
+            this.installWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.installWorker_DoWork);
+            this.installWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.initialChecker_ProgressChanged);
+            // 
             // FFXIVKoreanPatch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -165,7 +151,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.ClientSize = new System.Drawing.Size(384, 361);
+            this.ClientSize = new System.Drawing.Size(384, 411);
             this.Controls.Add(this.installButton);
             this.Controls.Add(this.chatOnlyInstallButton);
             this.Controls.Add(this.removeButton);
@@ -190,15 +176,13 @@
 
         #endregion
 
-        private System.ComponentModel.BackgroundWorker initialChecker;
-        private System.ComponentModel.BackgroundWorker installWorker;
-        private System.ComponentModel.BackgroundWorker removeWorker;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label downloadLabel;
         private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Button removeButton;
-        private System.ComponentModel.BackgroundWorker chatOnlyInstallWorker;
         private System.Windows.Forms.Button chatOnlyInstallButton;
         private System.Windows.Forms.Button installButton;
+        private System.ComponentModel.BackgroundWorker initialChecker;
+        private System.ComponentModel.BackgroundWorker installWorker;
     }
 }
