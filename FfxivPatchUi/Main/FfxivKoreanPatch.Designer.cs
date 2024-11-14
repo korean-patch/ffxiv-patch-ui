@@ -37,6 +37,8 @@
             this.installButton = new System.Windows.Forms.Button();
             this.initialChecker = new System.ComponentModel.BackgroundWorker();
             this.installWorker = new System.ComponentModel.BackgroundWorker();
+            this.chatOnlyWorker = new System.ComponentModel.BackgroundWorker();
+            this.removeWorker = new System.ComponentModel.BackgroundWorker();
             this.SuspendLayout();
             // 
             // progressBar
@@ -144,6 +146,18 @@
             this.installWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.installWorker_DoWork);
             this.installWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.initialChecker_ProgressChanged);
             // 
+            // chatOnlyWorker
+            // 
+            this.chatOnlyWorker.WorkerReportsProgress = true;
+            this.chatOnlyWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.chatOnlyWorker_DoWork);
+            this.chatOnlyWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.initialChecker_ProgressChanged);
+            // 
+            // removeWorker
+            // 
+            this.removeWorker.WorkerReportsProgress = true;
+            this.removeWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.removeWorker_DoWork);
+            this.removeWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.initialChecker_ProgressChanged);
+            // 
             // FFXIVKoreanPatch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -184,5 +198,7 @@
         private System.Windows.Forms.Button installButton;
         private System.ComponentModel.BackgroundWorker initialChecker;
         private System.ComponentModel.BackgroundWorker installWorker;
+        private System.ComponentModel.BackgroundWorker chatOnlyWorker;
+        private System.ComponentModel.BackgroundWorker removeWorker;
     }
 }

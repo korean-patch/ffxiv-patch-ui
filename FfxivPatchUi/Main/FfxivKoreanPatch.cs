@@ -88,6 +88,9 @@ namespace FFXIVKoreanPatch.Main
         // Target client version.
         private string targetVersion = string.Empty;
 
+        // Patch version.
+        private string serverVersion = string.Empty;
+
         #endregion
 
         public FFXIVKoreanPatch()
@@ -175,11 +178,12 @@ namespace FFXIVKoreanPatch.Main
         }
 
         // Update status label text always from UI thread.
-        private void UpdateStatusLabel(string text)
+        private void UpdateStatusLabel(string text, bool isRed = false)
         {
             Invoke(new Action(() =>
             {
                 statusLabel.Text = text;
+                statusLabel.ForeColor = isRed ? Color.Red : Color.White;
             }));
         }
 
@@ -559,7 +563,7 @@ namespace FFXIVKoreanPatch.Main
 
                 try
                 {
-                    string serverVersion = Encoding.ASCII.GetString(DownloadFile($"{serverUrl}/{versionFileName}", versionFileName, initialChecker));
+                    serverVersion = Encoding.ASCII.GetString(DownloadFile($"{serverUrl}/{versionFileName}", versionFileName, initialChecker));
 
                     if (!serverVersion.Equals(targetVersion))
                     {
@@ -568,9 +572,9 @@ namespace FFXIVKoreanPatch.Main
                             MessageBoxIcon.Error,
                             "현재 설치된 게임 클라이언트의 버전이 서버의 버전과 달라요!",
                             $"클라이언트 버전: {targetVersion}, 서버 버전: {serverVersion}",
+                            "",
+                            "(버전이 다를 경우 한글 패치가 정상적으로 작동하지 않을 수도 있으니 유의해주세요.)",
                             "문제가 지속되면 디스코드를 통해 문의해주세요.");
-                        CloseForm();
-                        return;
                     }
                 }
                 catch (Exception exception)
@@ -587,7 +591,7 @@ namespace FFXIVKoreanPatch.Main
                 }
 
                 // Check all done!
-                UpdateStatusLabel($"버전 {targetVersion}");
+                UpdateStatusLabel($"버전 {targetVersion}, 패치 버전 {serverVersion}", !serverVersion.Equals(targetVersion));
 
                 Invoke(new Action(() =>
                 {
@@ -620,6 +624,28 @@ namespace FFXIVKoreanPatch.Main
 
             // Start the background worker to install the korean patch.
             installWorker.RunWorkerAsync();
+        }
+
+        private void chatOnlyInstallButton_Click(object sender, EventArgs e)
+        {
+            // Block further inputs.
+            installButton.Enabled = false;
+            chatOnlyInstallButton.Enabled = false;
+            removeButton.Enabled = false;
+
+            // Start the background worker to install chat only.
+            chatOnlyWorker.RunWorkerAsync();
+        }
+
+        private void removeButton_Click(object sender, EventArgs e)
+        {
+            // Block further inputs.
+            installButton.Enabled = false;
+            chatOnlyInstallButton.Enabled = false;
+            removeButton.Enabled = false;
+
+            // Start the background worker to remove the korean patch.
+            removeWorker.RunWorkerAsync();
         }
 
         private void DownloadWork(string[] patchFiles, bool isRemove = false)
@@ -673,12 +699,12 @@ namespace FFXIVKoreanPatch.Main
             DownloadWork(fontPatchFiles.Concat(fullPatchFiles).ToArray());
         }
 
-        private void chatOnlyInstallButton_Click(object sender, EventArgs e)
+        private void chatOnlyWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             DownloadWork(fontPatchFiles);
         }
 
-        private void removeButton_Click(object sender, EventArgs e)
+        private void removeWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             DownloadWork(restoreFiles, true);
         }
